@@ -4,12 +4,20 @@
 # builtins
 import base64
 import json
+import pathlib
 import socket
+import sys
+from typing import TypedDict
 
 # 3rd party
 import netifaces
 import requests
 from urllib3.contrib import pyopenssl
+import yaml
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 # }}}
 
@@ -50,13 +58,13 @@ def get_default_gateway_name():
 
 
 class CertManager(object):
-    def __init__(self, host, client_id, client_token):
+    def __init__(self, host, client_id, client_token, no_verify_ssl=False):
         self.host = host
         self.id = client_id
         self.token = client_token
         self.session = requests.Session()
         self.session.headers.update({"Authorization": f"{client_id} {client_token}"})
-        self.session.verify = False
+        self.session.verify = not no_verify_ssl
 
     @property
     def endpoint(self):
@@ -85,3 +93,17 @@ class CertManager(object):
     def get(self):
         return json.loads(self.session.get(self.endpoint).text)
 
+
+class ConfFile(TypedDict):
+    client_id: str
+    client_token: str
+
+
+def get_config(path: pathlib.Path):
+    try:
+        with path.open() as fp:
+            data: ConfFile = yaml.load(fp, Loader=Loader)
+            return data
+    except (FileNotFoundError, OSError):
+        print(f"Unable to find or read a config file at {path}!")
+        sys.exit(1)

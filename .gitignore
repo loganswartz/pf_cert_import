@@ -118,6 +118,5 @@ dmypy.json
 # vim .swp files
 *.swp
 
-# local db
-notifeed.db
-/notifeed/notifications/plugins/
+# local conf file
+*.pf_cert_manager.conf
